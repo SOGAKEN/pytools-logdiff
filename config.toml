@@ -2,4 +2,5 @@
 temperature = { split = { pattern = "Temp:", limit_keyword = "Normal", regex = false } }
 ["show env all"]
 temperature = { multi_pattern = { pattern = "Temp:.+Normal", regex = true } }
-# 他のパターンがあれば追加
+["show env all"]
+temperature = { multi_pattern = { pattern = "Temp:\\s*\\S+\\s+\\S+\\s+Normal", regex = true } }
