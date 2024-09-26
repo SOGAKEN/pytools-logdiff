@@ -1,6 +1,3 @@
-import re
-
-
 def compare_flexible_pattern(
     lines_a,
     lines_b,
@@ -94,12 +91,16 @@ def compare_flexible_pattern(
 
         result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
 
+        # キーワードを抽出（IPアドレスとサブネットマスク）
+        ip_mask = re.search(r"(\d+\.\d+\.\d+\.\d+/\d+)", key)
+        keyword_text = ip_mask.group(1) if ip_mask else key.split()[0]
+
         results.append(
             {
                 "id": id_counter,
                 "block": block_number,
                 "block_type": block_type,
-                "keyword": f"{keyword} ({key.split()[0]})",
+                "keyword": f"{keyword} ({keyword_text})",
                 "file_a_content": full_content_a,
                 "file_b_content": full_content_b,
                 "file_a_line": (
