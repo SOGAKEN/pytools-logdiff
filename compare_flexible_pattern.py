@@ -12,18 +12,25 @@ def compare_flexible_pattern(
     start_keyword = config["start_keyword"]
     end_keyword = config["end_keyword"]
 
-    def extract_content(lines):
+    print(f"Debug: start_keyword = {start_keyword}")
+    print(f"Debug: end_keyword = {end_keyword}")
+
+    def extract_content(lines, file_label):
         content = {}
         i = 0
         while i < len(lines):
             line = lines[i].strip()
+            print(f"Debug {file_label}: Processing line {i}: {line}")
             if start_keyword in line:
+                print(f"Debug {file_label}: Start keyword found in line {i}")
                 current_content = [line]
                 j = i + 1
                 while j < len(lines):
                     next_line = lines[j].strip()
                     current_content.append(next_line)
+                    print(f"Debug {file_label}: Adding line {j}: {next_line}")
                     if end_keyword in next_line:
+                        print(f"Debug {file_label}: End keyword found in line {j}")
                         break
                     j += 1
 
@@ -35,13 +42,18 @@ def compare_flexible_pattern(
                 else:
                     formatted_content = " ".join(current_content)
 
+                print(f"Debug {file_label}: Formatted content: {formatted_content}")
                 content[line] = (formatted_content, i)
                 i = j
             i += 1
+        print(f"Debug {file_label}: Extracted content: {content}")
         return content
 
-    content_a = extract_content(lines_a)
-    content_b = extract_content(lines_b)
+    content_a = extract_content(lines_a, "File A")
+    content_b = extract_content(lines_b, "File B")
+
+    print(f"Debug: content_a = {content_a}")
+    print(f"Debug: content_b = {content_b}")
 
     results = []
     all_keys = set(content_a.keys()) | set(content_b.keys())
@@ -75,4 +87,5 @@ def compare_flexible_pattern(
         )
         id_counter += 1
 
+    print(f"Debug: results = {results}")
     return results
