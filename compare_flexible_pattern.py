@@ -1,3 +1,6 @@
+import re
+
+
 def compare_flexible_pattern(
     lines_a,
     lines_b,
@@ -26,28 +29,25 @@ def compare_flexible_pattern(
             if start_keyword in line:
                 print(f"Debug {file_label}: start_keyword found in line {i}")
                 if current_key:
-                    content[current_key] = (
-                        "\n".join(current_content),
-                        i - len(current_content),
-                    )
+                    content[current_key] = ("\n".join(current_content), start_line)
                 current_key = line.strip()
                 current_content = [line.strip()]
+                start_line = i
+                if end_keyword and end_keyword in line:
+                    print(f"Debug {file_label}: end_keyword found in the same line")
+                    content[current_key] = ("\n".join(current_content), start_line)
+                    current_key = None
+                    current_content = []
             elif current_key:
                 current_content.append(line.strip())
                 if end_keyword and end_keyword in line:
                     print(f"Debug {file_label}: end_keyword found in line {i}")
-                    content[current_key] = (
-                        "\n".join(current_content),
-                        i - len(current_content) + 1,
-                    )
+                    content[current_key] = ("\n".join(current_content), start_line)
                     current_key = None
                     current_content = []
 
         if current_key:
-            content[current_key] = (
-                "\n".join(current_content),
-                i - len(current_content) + 1,
-            )
+            content[current_key] = ("\n".join(current_content), start_line)
 
         print(f"Debug {file_label}: All extracted content: {content}")
         return content
