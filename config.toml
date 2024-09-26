@@ -6,9 +6,20 @@ temperature = { multi_pattern = { pattern = "Temp:.+Normal", regex = true } }
 temperature = { multi_pattern = { pattern = "Temp:\\s*\\S+\\s+\\S+\\s+Normal", regex = true } }
 ["show env all"]
 temperature = { 
-    multi_pattern = { 
-        pattern = "Temp:.*", 
-        regex = true,
-        compare_range = [0, 3]  # Temp: から Normal までの4つの項目を比較
-    } 
+	multi_pattern = { 
+		pattern = "Temp:.*", 
+		regex = true,
+		compare_range = [0, 3]  # Temp: から Normal までの4つの項目を比較
+	} 
+}
+[
+"flexible_comparison"
+]
+route_comparison = { 
+	flexible_pattern = {
+		start_keyword = "\\d+\\.\\d+\\.\\d+\\.\\d+",  # IPアドレスのパターン
+		end_keyword = "(?=\\d+\\.\\d+\\.\\d+\\.\\d+|$)",  # 次のIPアドレスまたは行末
+		compare_range = [1, -1],  # IPアドレス以降のすべての情報を比較
+		regex = true
+	}
 }
