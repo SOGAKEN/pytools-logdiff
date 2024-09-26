@@ -1,13 +1,3 @@
-# GUIの作成部分に以下を追加
-show_true_var = tk.BooleanVar(value=True)
-show_true_checkbox = ttk.Checkbutton(
-    file_selection_frame, text="TRUEの結果を表示する", variable=show_true_var
-)
-show_true_checkbox.pack(pady=5)
-
-# compare_button の前に配置
-
-
 def display_results(result_text, results):
     summary = create_summary(results)
 
@@ -22,7 +12,7 @@ def display_results(result_text, results):
     current_block_type = None
     for result in results:
         if result["result"] == "TRUE" and not show_true_var.get():
-            continue  # TRUEの結果を表示しない設定の場合はスキップ
+            continue
 
         if result["block_type"] != current_block_type:
             current_block_type = result["block_type"]
