@@ -63,3 +63,21 @@ ip_route_comparison = {
         include_end_keyword = true  # 新しいオプション
     }
 }
+[
+"show ip route"
+]
+ip_route_comparison = { 
+    flexible_pattern = {
+        ip_addresses = [
+            "10.10.23.10/25",
+            "10.10.24.10/25",
+            "10.10.25.10/25"
+        ],
+        start_keyword = "D\\s+",
+        end_keyword = "GigabitEthernet\\d+/\\d+/\\d+",
+        regex = true,
+        escape_start_keyword = false,
+        include_end_keyword = true,
+        ignore_time = true
+    }
+}

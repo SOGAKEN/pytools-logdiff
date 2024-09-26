@@ -9,6 +9,7 @@ def compare_flexible_pattern(
     cumulative_lines_a,
     cumulative_lines_b,
 ):
+    ip_addresses = config.get("ip_addresses", [])
     start_keyword = config["start_keyword"]
     end_keyword = config["end_keyword"]
     use_regex = config.get("regex", True)
@@ -21,56 +22,39 @@ def compare_flexible_pattern(
 
     def extract_content(lines):
         content = {}
-        current_key = None
-        current_content = []
         i = 0
         while i < len(lines):
             line = lines[i].strip()
-            if use_regex:
-                start_match = re.search(escape_regex(start_keyword), line)
-            else:
-                start_match = start_keyword in line
-
-            if start_match:
-                if current_key:
-                    content[current_key] = (
-                        "\n".join(current_content),
-                        i - len(current_content),
+            for ip in ip_addresses:
+                if use_regex:
+                    start_match = re.search(
+                        f"{escape_regex(start_keyword)}{re.escape(ip)}", line
                     )
-                current_key = line
-                current_content = [line]
-                j = i + 1
-                while j < len(lines):
-                    next_line = lines[j].strip()
-                    if use_regex:
-                        end_match = re.search(escape_regex(end_keyword), next_line)
-                        next_start_match = re.search(
-                            escape_regex(start_keyword), next_line
-                        )
-                    else:
-                        end_match = end_keyword in next_line
-                        next_start_match = start_keyword in next_line
+                else:
+                    start_match = f"{start_keyword}{ip}" in line
 
-                    if next_start_match:
-                        break
+                if start_match:
+                    current_key = line
+                    current_content = [line]
+                    j = i + 1
+                    while j < len(lines):
+                        next_line = lines[j].strip()
+                        if use_regex:
+                            end_match = re.search(escape_regex(end_keyword), next_line)
+                        else:
+                            end_match = end_keyword in next_line
 
-                    current_content.append(next_line)
+                        current_content.append(next_line)
 
-                    if end_match:
-                        if include_end_keyword:
-                            current_content.append(next_line)
-                        break
-                    j += 1
-                i = j
-            else:
-                i += 1
-
-        if current_key:  # 最後のエントリを処理
-            content[current_key] = (
-                "\n".join(current_content),
-                len(lines) - len(current_content),
-            )
-
+                        if end_match:
+                            if not include_end_keyword:
+                                current_content.pop()
+                            break
+                        j += 1
+                    content[current_key] = ("\n".join(current_content), i)
+                    i = j
+                    break
+            i += 1
         return content
 
     def normalize_content(content):
