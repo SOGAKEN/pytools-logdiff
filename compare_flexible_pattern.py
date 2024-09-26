@@ -1,3 +1,6 @@
+import re
+
+
 def compare_flexible_pattern(
     lines_a,
     lines_b,
@@ -11,7 +14,6 @@ def compare_flexible_pattern(
 ):
     start_keyword = config["start_keyword"]
     end_keyword = config["end_keyword"]
-    compare_range = config.get("compare_range", [0, -1])
     use_regex = config.get("regex", True)
 
     def extract_content(lines):
@@ -36,19 +38,14 @@ def compare_flexible_pattern(
                 current_content = [line.strip()]
             elif current_key:
                 current_content.append(line.strip())
-                if end_match:
-                    content[current_key] = (
-                        " ".join(current_content),
-                        i - len(current_content) + 1,
-                    )
-                    current_key = None
-                    current_content = []
 
-        if current_key:
-            content[current_key] = (
-                " ".join(current_content),
-                len(lines) - len(current_content),
-            )
+            if end_match and current_key:
+                content[current_key] = (
+                    " ".join(current_content),
+                    i - len(current_content) + 1,
+                )
+                current_key = None
+                current_content = []
 
         return content
 
@@ -62,23 +59,18 @@ def compare_flexible_pattern(
         full_content_a, line_a = content_a.get(key, ("Not found", -1))
         full_content_b, line_b = content_b.get(key, ("Not found", -1))
 
-        parts_a = full_content_a.split()
-        parts_b = full_content_b.split()
+        # 内容を正規化（余分な空白を削除）
+        normalized_content_a = " ".join(full_content_a.split())
+        normalized_content_b = " ".join(full_content_b.split())
 
-        start = compare_range[0]
-        end = compare_range[1] if compare_range[1] != -1 else None
-
-        compared_content_a = " ".join(parts_a[start:end])
-        compared_content_b = " ".join(parts_b[start:end])
-
-        result = "TRUE" if compared_content_a == compared_content_b else "FALSE"
+        result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
 
         results.append(
             {
                 "id": id_counter,
                 "block": block_number,
                 "block_type": block_type,
-                "keyword": f"{keyword} ({key.split()[0]})",  # キーの最初の部分（例：IPアドレス）を使用
+                "keyword": f"{keyword} ({key.split()[0]})",  # キーの最初の部分（IPアドレス）を使用
                 "file_a_content": full_content_a,
                 "file_b_content": full_content_b,
                 "file_a_line": (
