@@ -43,17 +43,24 @@ def compare_flexible_pattern(
                     next_line = lines[j].strip()
                     if use_regex:
                         end_match = re.search(end_keyword, next_line)
+                        next_start_match = re.search(
+                            escape_regex(start_keyword), next_line
+                        )
                     else:
                         end_match = end_keyword in next_line
+                        next_start_match = start_keyword in next_line
+
+                    if next_start_match:
+                        break
 
                     current_content.append(next_line)
 
                     if end_match:
-                        if not include_end_keyword:
-                            current_content.pop()
+                        if include_end_keyword:
+                            j += 1
                         break
                     j += 1
-                i = j
+                i = j - 1
             i += 1
 
         if current_key:  # 最後のエントリを処理
@@ -74,9 +81,13 @@ def compare_flexible_pattern(
         full_content_a, line_a = content_a.get(key, ("Not found", -1))
         full_content_b, line_b = content_b.get(key, ("Not found", -1))
 
-        # 内容を正規化（余分な空白を削除）
-        normalized_content_a = " ".join(full_content_a.split())
-        normalized_content_b = " ".join(full_content_b.split())
+        # 内容を正規化（余分な空白を削除するが、改行は保持）
+        normalized_content_a = "\n".join(
+            " ".join(line.split()) for line in full_content_a.split("\n")
+        )
+        normalized_content_b = "\n".join(
+            " ".join(line.split()) for line in full_content_b.split("\n")
+        )
 
         result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
 
