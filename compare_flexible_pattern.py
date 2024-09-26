@@ -11,49 +11,36 @@ def compare_flexible_pattern(
 ):
     start_keyword = config["start_keyword"]
     end_keyword = config["end_keyword"]
+    ignore_time = config.get("ignore_time", True)
 
-    print(f"Debug: start_keyword = {start_keyword}")
-    print(f"Debug: end_keyword = {end_keyword}")
-
-    def extract_content(lines, file_label):
+    def extract_content(lines):
         content = {}
-        i = 0
-        while i < len(lines):
-            line = lines[i].strip()
-            print(f"Debug {file_label}: Processing line {i}: {line}")
+        current_key = None
+        for i, line in enumerate(lines):
             if start_keyword in line:
-                print(f"Debug {file_label}: Start keyword found in line {i}")
-                current_content = [line]
-                j = i + 1
-                while j < len(lines):
-                    next_line = lines[j].strip()
-                    current_content.append(next_line)
-                    print(f"Debug {file_label}: Adding line {j}: {next_line}")
-                    if end_keyword in next_line:
-                        print(f"Debug {file_label}: End keyword found in line {j}")
-                        break
-                    j += 1
-
-                # 抽出した内容を1行または2行に整形
-                if len(current_content) > 2:
-                    formatted_content = (
-                        current_content[0] + " " + " ".join(current_content[1:])
-                    )
-                else:
-                    formatted_content = " ".join(current_content)
-
-                print(f"Debug {file_label}: Formatted content: {formatted_content}")
-                content[line] = (formatted_content, i)
-                i = j
-            i += 1
-        print(f"Debug {file_label}: Extracted content: {content}")
+                if current_key:
+                    content[current_key] = (current_content, start_line)
+                current_key = line.strip()
+                current_content = line.strip()
+                start_line = i
+            elif current_key and end_keyword in line:
+                current_content += " " + line.strip()
+                content[current_key] = (current_content, start_line)
+                current_key = None
+            elif current_key:
+                current_content += " " + line.strip()
+        if current_key:
+            content[current_key] = (current_content, start_line)
         return content
 
-    content_a = extract_content(lines_a, "File A")
-    content_b = extract_content(lines_b, "File B")
+    def normalize_content(content):
+        if ignore_time:
+            # Remove time information (e.g., 2w6d, 00:06:35)
+            content = re.sub(r"\s+\d+:\d+:\d+|\s+\d+[wdhms]+", "", content)
+        return " ".join(content.split())
 
-    print(f"Debug: content_a = {content_a}")
-    print(f"Debug: content_b = {content_b}")
+    content_a = extract_content(lines_a)
+    content_b = extract_content(lines_b)
 
     results = []
     all_keys = set(content_a.keys()) | set(content_b.keys())
@@ -62,9 +49,11 @@ def compare_flexible_pattern(
         full_content_a, line_a = content_a.get(key, ("Not found", -1))
         full_content_b, line_b = content_b.get(key, ("Not found", -1))
 
-        result = "TRUE" if full_content_a == full_content_b else "FALSE"
+        normalized_content_a = normalize_content(full_content_a)
+        normalized_content_b = normalize_content(full_content_b)
 
-        # キーワードを抽出（IPアドレスとサブネットマスク）
+        result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
+
         ip_mask = re.search(r"(\d+\.\d+\.\d+\.\d+/\d+)", key)
         keyword_text = ip_mask.group(1) if ip_mask else key.split()[0]
 
@@ -87,5 +76,4 @@ def compare_flexible_pattern(
         )
         id_counter += 1
 
-    print(f"Debug: results = {results}")
     return results

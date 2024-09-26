@@ -5,3 +5,13 @@ ip_route_comparison = {
         end_keyword = "GigabitEthernet0/0/0"
     } 
 }
+[
+"show ip route"
+]
+ip_route_comparison = { 
+    flexible_pattern = { 
+        start_keyword = "D        10.6.",
+        end_keyword = "GigabitEthernet0/0/0",
+        ignore_time = true
+    } 
+}
