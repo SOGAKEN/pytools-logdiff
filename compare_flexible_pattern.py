@@ -14,6 +14,7 @@ def compare_flexible_pattern(
     use_regex = config.get("regex", True)
     escape_start_keyword = config.get("escape_start_keyword", False)
     include_end_keyword = config.get("include_end_keyword", True)
+    ignore_time = config.get("ignore_time", True)
 
     def escape_regex(pattern):
         return re.escape(pattern) if escape_start_keyword else pattern
@@ -42,7 +43,7 @@ def compare_flexible_pattern(
                 while j < len(lines):
                     next_line = lines[j].strip()
                     if use_regex:
-                        end_match = re.search(end_keyword, next_line)
+                        end_match = re.search(escape_regex(end_keyword), next_line)
                         next_start_match = re.search(
                             escape_regex(start_keyword), next_line
                         )
@@ -57,11 +58,12 @@ def compare_flexible_pattern(
 
                     if end_match:
                         if include_end_keyword:
-                            j += 1
+                            current_content.append(next_line)
                         break
                     j += 1
-                i = j - 1
-            i += 1
+                i = j
+            else:
+                i += 1
 
         if current_key:  # 最後のエントリを処理
             content[current_key] = (
@@ -72,7 +74,10 @@ def compare_flexible_pattern(
         return content
 
     def normalize_content(content):
-        # 空白と改行を取り除き、内容を正規化
+        if ignore_time:
+            # 経過時間を示す部分を削除
+            content = re.sub(r",\s*\d+[wdhms:]+,", ",", content)
+        # 空白と改行を取り除く
         return re.sub(r"\s+", "", content)
 
     content_a = extract_content(lines_a)
