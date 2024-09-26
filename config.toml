@@ -44,3 +44,12 @@ ip_route_comparison = {
         escape_start_keyword = false  # 新しいオプション
     }
 }
+["show ip route"]
+ip_route_comparison = { 
+    flexible_pattern = {
+        start_keyword = "D\\s+10\\.10\\.10\\.",
+        end_keyword = "GigabitEthernet0/0/0$",
+        regex = true,
+        escape_start_keyword = false
+    }
+}

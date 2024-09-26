@@ -12,7 +12,7 @@ def compare_flexible_pattern(
     start_keyword = config["start_keyword"]
     end_keyword = config["end_keyword"]
     use_regex = config.get("regex", True)
-    escape_start_keyword = config.get("escape_start_keyword", True)
+    escape_start_keyword = config.get("escape_start_keyword", False)
 
     def escape_regex(pattern):
         return re.escape(pattern) if escape_start_keyword else pattern
@@ -21,14 +21,11 @@ def compare_flexible_pattern(
         content = {}
         current_key = None
         current_content = []
-        in_target_section = False
         for i, line in enumerate(lines):
             if use_regex:
                 start_match = re.search(escape_regex(start_keyword), line)
-                end_match = re.search(end_keyword, line) if in_target_section else None
             else:
                 start_match = start_keyword in line
-                end_match = end_keyword in line if in_target_section else None
 
             if start_match:
                 if current_key:
@@ -38,20 +35,22 @@ def compare_flexible_pattern(
                     )
                 current_key = line.strip()
                 current_content = [line.strip()]
-                in_target_section = True
-            elif in_target_section:
+            elif current_key:
                 current_content.append(line.strip())
+                if use_regex:
+                    end_match = re.search(end_keyword, line)
+                else:
+                    end_match = end_keyword in line
 
-            if end_match:
-                content[current_key] = (
-                    " ".join(current_content),
-                    i - len(current_content) + 1,
-                )
-                current_key = None
-                current_content = []
-                in_target_section = False
+                if end_match:
+                    content[current_key] = (
+                        " ".join(current_content),
+                        i - len(current_content) + 1,
+                    )
+                    current_key = None
+                    current_content = []
 
-        if current_key and in_target_section:  # 最後のエントリを処理
+        if current_key:  # 最後のエントリを処理
             content[current_key] = (
                 " ".join(current_content),
                 len(lines) - len(current_content),
@@ -80,7 +79,7 @@ def compare_flexible_pattern(
                 "id": id_counter,
                 "block": block_number,
                 "block_type": block_type,
-                "keyword": f"{keyword} ({key.split()[0]})",  # キーの最初の部分（IPアドレス）を使用
+                "keyword": f"{keyword} ({key.split()[0]})",
                 "file_a_content": full_content_a,
                 "file_b_content": full_content_b,
                 "file_a_line": (
