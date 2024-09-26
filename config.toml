@@ -4,3 +4,11 @@ temperature = { split = { pattern = "Temp:", limit_keyword = "Normal", regex = f
 temperature = { multi_pattern = { pattern = "Temp:.+Normal", regex = true } }
 ["show env all"]
 temperature = { multi_pattern = { pattern = "Temp:\\s*\\S+\\s+\\S+\\s+Normal", regex = true } }
+["show env all"]
+temperature = { 
+    multi_pattern = { 
+        pattern = "Temp:.*", 
+        regex = true,
+        compare_range = [0, 3]  # Temp: から Normal までの4つの項目を比較
+    } 
+}
