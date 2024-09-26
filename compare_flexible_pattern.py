@@ -1,6 +1,3 @@
-import re
-
-
 def compare_flexible_pattern(
     lines_a,
     lines_b,
@@ -15,6 +12,10 @@ def compare_flexible_pattern(
     start_keyword = config["start_keyword"]
     end_keyword = config["end_keyword"]
     use_regex = config.get("regex", True)
+    escape_start_keyword = config.get("escape_start_keyword", True)
+
+    def escape_regex(pattern):
+        return re.escape(pattern) if escape_start_keyword else pattern
 
     def extract_content(lines):
         content = {}
@@ -22,7 +23,7 @@ def compare_flexible_pattern(
         current_content = []
         for i, line in enumerate(lines):
             if use_regex:
-                start_match = re.search(start_keyword, line)
+                start_match = re.search(escape_regex(start_keyword), line)
                 end_match = re.search(end_keyword, line)
             else:
                 start_match = start_keyword in line
@@ -40,12 +41,19 @@ def compare_flexible_pattern(
                 current_content.append(line.strip())
 
             if end_match and current_key:
+                current_content.append(line.strip())
                 content[current_key] = (
                     " ".join(current_content),
                     i - len(current_content) + 1,
                 )
                 current_key = None
                 current_content = []
+
+        if current_key:  # 最後のエントリを処理
+            content[current_key] = (
+                " ".join(current_content),
+                len(lines) - len(current_content),
+            )
 
         return content
 

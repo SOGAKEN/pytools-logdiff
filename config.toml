@@ -33,3 +33,14 @@ ip_route_comparison = {
         regex = true
     }
 }
+	[
+"routing_table"
+]
+ip_route_comparison = { 
+    flexible_pattern = {
+        start_keyword = "10\\.10\\.10\\.10/25",
+        end_keyword = "GigabitEthernet0/0/0$",
+        regex = true,
+        escape_start_keyword = false  # 新しいオプション
+    }
+}
