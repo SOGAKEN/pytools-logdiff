@@ -1,3 +1,6 @@
+import re
+
+
 def compare_flexible_pattern(
     lines_a,
     lines_b,
@@ -13,16 +16,24 @@ def compare_flexible_pattern(
     end_keyword = config.get("end_keyword", "")
     ignore_time = config.get("ignore_time", True)
 
-    def extract_content(lines):
+    print(f"Debug: start_keyword = {start_keyword}")
+    print(f"Debug: end_keyword = {end_keyword}")
+    print(f"Debug: ignore_time = {ignore_time}")
+
+    def extract_content(lines, file_label):
         content = {}
         for i, line in enumerate(lines):
+            print(f"Debug {file_label}: Processing line {i}: {line}")
             if start_keyword in line:
+                print(f"Debug {file_label}: start_keyword found in line {i}")
                 match = re.search(
                     f"{re.escape(start_keyword)}.*?({re.escape(end_keyword)}|$)", line
                 )
                 if match:
                     current_key = match.group(0).strip()
                     content[current_key] = (current_key, i)
+                    print(f"Debug {file_label}: Extracted content: {current_key}")
+        print(f"Debug {file_label}: All extracted content: {content}")
         return content
 
     def normalize_content(content):
@@ -31,11 +42,8 @@ def compare_flexible_pattern(
             content = re.sub(r"\s+\d+:\d+:\d+|\s+\d+[wdhms]+", "", content)
         return " ".join(content.split())
 
-    content_a = extract_content(lines_a)
-    content_b = extract_content(lines_b)
-
-    print(f"Debug: Extracted content A: {content_a}")  # デバッグ出力
-    print(f"Debug: Extracted content B: {content_b}")  # デバッグ出力
+    content_a = extract_content(lines_a, "File A")
+    content_b = extract_content(lines_b, "File B")
 
     results = []
     all_keys = set(content_a.keys()) | set(content_b.keys())
@@ -47,8 +55,9 @@ def compare_flexible_pattern(
         normalized_content_a = normalize_content(full_content_a)
         normalized_content_b = normalize_content(full_content_b)
 
-        print(f"Debug: Normalized content A: {normalized_content_a}")  # デバッグ出力
-        print(f"Debug: Normalized content B: {normalized_content_b}")  # デバッグ出力
+        print(f"Debug: Comparing - Key: {key}")
+        print(f"Debug: Normalized content A: {normalized_content_a}")
+        print(f"Debug: Normalized content B: {normalized_content_b}")
 
         result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
 
@@ -76,4 +85,5 @@ def compare_flexible_pattern(
         )
         id_counter += 1
 
+    print(f"Debug: Final results: {results}")
     return results
