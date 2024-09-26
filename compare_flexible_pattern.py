@@ -17,23 +17,35 @@ def compare_flexible_pattern(
     include_end_keyword = config.get("include_end_keyword", True)
     ignore_time = config.get("ignore_time", True)
 
+    print(f"Debug: Config - {config}")  # デバッグ出力
+
     def escape_regex(pattern):
         return re.escape(pattern) if escape_start_keyword else pattern
 
-    def extract_content(lines):
+    def extract_content(lines, file_label):
         content = {}
         i = 0
         while i < len(lines):
             line = lines[i].strip()
+            print(f"Debug: Checking line in {file_label} - {line}")  # デバッグ出力
             for ip in ip_addresses:
                 if use_regex:
-                    start_match = re.search(
-                        f"{escape_regex(start_keyword)}{re.escape(ip)}", line
-                    )
+                    full_pattern = f"{escape_regex(start_keyword)}{re.escape(ip)}"
+                    start_match = re.search(full_pattern, line)
+                    print(
+                        f"Debug: Regex pattern for {ip} - {full_pattern}"
+                    )  # デバッグ出力
                 else:
-                    start_match = f"{start_keyword}{ip}" in line
+                    full_pattern = f"{start_keyword}{ip}"
+                    start_match = full_pattern in line
+                    print(
+                        f"Debug: String pattern for {ip} - {full_pattern}"
+                    )  # デバッグ出力
 
                 if start_match:
+                    print(
+                        f"Debug: Match found for {ip} in {file_label}"
+                    )  # デバッグ出力
                     current_key = line
                     current_content = [line]
                     j = i + 1
@@ -49,12 +61,16 @@ def compare_flexible_pattern(
                         if end_match:
                             if not include_end_keyword:
                                 current_content.pop()
+                            print(
+                                f"Debug: End pattern found for {ip} in {file_label}"
+                            )  # デバッグ出力
                             break
                         j += 1
                     content[current_key] = ("\n".join(current_content), i)
                     i = j
                     break
             i += 1
+        print(f"Debug: Extracted content from {file_label} - {content}")  # デバッグ出力
         return content
 
     def normalize_content(content):
@@ -64,8 +80,8 @@ def compare_flexible_pattern(
         # 空白と改行を取り除く
         return re.sub(r"\s+", "", content)
 
-    content_a = extract_content(lines_a)
-    content_b = extract_content(lines_b)
+    content_a = extract_content(lines_a, "File A")
+    content_b = extract_content(lines_b, "File B")
 
     results = []
     all_keys = set(content_a.keys()) | set(content_b.keys())
@@ -103,4 +119,5 @@ def compare_flexible_pattern(
         )
         id_counter += 1
 
+    print(f"Debug: Final results - {results}")  # デバッグ出力
     return results
