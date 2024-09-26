@@ -1,3 +1,6 @@
+import re
+
+
 def compare_flexible_pattern(
     lines_a,
     lines_b,
@@ -71,6 +74,10 @@ def compare_flexible_pattern(
 
         return content
 
+    def normalize_content(content):
+        # 空白と改行を取り除き、内容を正規化
+        return re.sub(r"\s+", "", content)
+
     content_a = extract_content(lines_a)
     content_b = extract_content(lines_b)
 
@@ -81,13 +88,9 @@ def compare_flexible_pattern(
         full_content_a, line_a = content_a.get(key, ("Not found", -1))
         full_content_b, line_b = content_b.get(key, ("Not found", -1))
 
-        # 内容を正規化（余分な空白を削除するが、改行は保持）
-        normalized_content_a = "\n".join(
-            " ".join(line.split()) for line in full_content_a.split("\n")
-        )
-        normalized_content_b = "\n".join(
-            " ".join(line.split()) for line in full_content_b.split("\n")
-        )
+        # 内容を正規化
+        normalized_content_a = normalize_content(full_content_a)
+        normalized_content_b = normalize_content(full_content_b)
 
         result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
 
