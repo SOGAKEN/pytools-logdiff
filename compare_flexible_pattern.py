@@ -10,27 +10,19 @@ def compare_flexible_pattern(
     cumulative_lines_b,
 ):
     start_keyword = config["start_keyword"]
-    end_keyword = config["end_keyword"]
+    end_keyword = config.get("end_keyword", "")
     ignore_time = config.get("ignore_time", True)
 
     def extract_content(lines):
         content = {}
-        current_key = None
         for i, line in enumerate(lines):
             if start_keyword in line:
-                if current_key:
-                    content[current_key] = (current_content, start_line)
-                current_key = line.strip()
-                current_content = line.strip()
-                start_line = i
-            elif current_key and end_keyword in line:
-                current_content += " " + line.strip()
-                content[current_key] = (current_content, start_line)
-                current_key = None
-            elif current_key:
-                current_content += " " + line.strip()
-        if current_key:
-            content[current_key] = (current_content, start_line)
+                match = re.search(
+                    f"{re.escape(start_keyword)}.*?({re.escape(end_keyword)}|$)", line
+                )
+                if match:
+                    current_key = match.group(0).strip()
+                    content[current_key] = (current_key, i)
         return content
 
     def normalize_content(content):
@@ -42,6 +34,9 @@ def compare_flexible_pattern(
     content_a = extract_content(lines_a)
     content_b = extract_content(lines_b)
 
+    print(f"Debug: Extracted content A: {content_a}")  # デバッグ出力
+    print(f"Debug: Extracted content B: {content_b}")  # デバッグ出力
+
     results = []
     all_keys = set(content_a.keys()) | set(content_b.keys())
 
@@ -52,10 +47,15 @@ def compare_flexible_pattern(
         normalized_content_a = normalize_content(full_content_a)
         normalized_content_b = normalize_content(full_content_b)
 
+        print(f"Debug: Normalized content A: {normalized_content_a}")  # デバッグ出力
+        print(f"Debug: Normalized content B: {normalized_content_b}")  # デバッグ出力
+
         result = "TRUE" if normalized_content_a == normalized_content_b else "FALSE"
 
-        ip_mask = re.search(r"(\d+\.\d+\.\d+\.\d+/\d+)", key)
-        keyword_text = ip_mask.group(1) if ip_mask else key.split()[0]
+        ip_mask = re.search(r"(\d+\.\d+\.\d+\.\d+(/\d+)?)", key)
+        keyword_text = (
+            ip_mask.group(1) if ip_mask else key.split()[1]
+        )  # start_keywordの次の要素を使用
 
         results.append(
             {
