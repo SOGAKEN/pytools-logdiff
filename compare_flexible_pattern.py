@@ -13,6 +13,7 @@ def compare_flexible_pattern(
     end_keyword = config["end_keyword"]
     use_regex = config.get("regex", True)
     escape_start_keyword = config.get("escape_start_keyword", False)
+    include_end_keyword = config.get("include_end_keyword", True)
 
     def escape_regex(pattern):
         return re.escape(pattern) if escape_start_keyword else pattern
@@ -21,7 +22,9 @@ def compare_flexible_pattern(
         content = {}
         current_key = None
         current_content = []
-        for i, line in enumerate(lines):
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
             if use_regex:
                 start_match = re.search(escape_regex(start_keyword), line)
             else:
@@ -30,29 +33,32 @@ def compare_flexible_pattern(
             if start_match:
                 if current_key:
                     content[current_key] = (
-                        " ".join(current_content),
+                        "\n".join(current_content),
                         i - len(current_content),
                     )
-                current_key = line.strip()
-                current_content = [line.strip()]
-            elif current_key:
-                current_content.append(line.strip())
-                if use_regex:
-                    end_match = re.search(end_keyword, line)
-                else:
-                    end_match = end_keyword in line
+                current_key = line
+                current_content = [line]
+                j = i + 1
+                while j < len(lines):
+                    next_line = lines[j].strip()
+                    if use_regex:
+                        end_match = re.search(end_keyword, next_line)
+                    else:
+                        end_match = end_keyword in next_line
 
-                if end_match:
-                    content[current_key] = (
-                        " ".join(current_content),
-                        i - len(current_content) + 1,
-                    )
-                    current_key = None
-                    current_content = []
+                    current_content.append(next_line)
+
+                    if end_match:
+                        if not include_end_keyword:
+                            current_content.pop()
+                        break
+                    j += 1
+                i = j
+            i += 1
 
         if current_key:  # 最後のエントリを処理
             content[current_key] = (
-                " ".join(current_content),
+                "\n".join(current_content),
                 len(lines) - len(current_content),
             )
 
