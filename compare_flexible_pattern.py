@@ -21,13 +21,14 @@ def compare_flexible_pattern(
         content = {}
         current_key = None
         current_content = []
+        in_target_section = False
         for i, line in enumerate(lines):
             if use_regex:
                 start_match = re.search(escape_regex(start_keyword), line)
-                end_match = re.search(end_keyword, line)
+                end_match = re.search(end_keyword, line) if in_target_section else None
             else:
                 start_match = start_keyword in line
-                end_match = end_keyword in line
+                end_match = end_keyword in line if in_target_section else None
 
             if start_match:
                 if current_key:
@@ -37,19 +38,20 @@ def compare_flexible_pattern(
                     )
                 current_key = line.strip()
                 current_content = [line.strip()]
-            elif current_key:
+                in_target_section = True
+            elif in_target_section:
                 current_content.append(line.strip())
 
-            if end_match and current_key:
-                current_content.append(line.strip())
+            if end_match:
                 content[current_key] = (
                     " ".join(current_content),
                     i - len(current_content) + 1,
                 )
                 current_key = None
                 current_content = []
+                in_target_section = False
 
-        if current_key:  # 最後のエントリを処理
+        if current_key and in_target_section:  # 最後のエントリを処理
             content[current_key] = (
                 " ".join(current_content),
                 len(lines) - len(current_content),
